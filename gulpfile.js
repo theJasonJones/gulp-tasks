@@ -7,7 +7,9 @@ var gulp = require('gulp'),
     header  = require('gulp-header'),
     rename = require('gulp-rename'),
     minifyCSS = require('gulp-minify-css'),
-    package = require('./package.json');
+    package = require('./package.json'),
+    imagemin = require('gulp-imagemin'),
+    pngcrush = require('imagemin-pngcrush');
 
 
 var banner = [
@@ -22,6 +24,7 @@ var banner = [
   '\n'
 ].join('');
 
+//Clean up CSS
 gulp.task('css', function () {
     return gulp.src('src/scss/style.scss')
     .pipe(sass({errLogToConsole: true}))
@@ -34,6 +37,7 @@ gulp.task('css', function () {
     .pipe(browserSync.reload({stream:true}));
 });
 
+//Lint Javascript
 gulp.task('js',function(){
   gulp.src('src/js/scripts.js')
     .pipe(jshint('.jshintrc'))
@@ -47,6 +51,19 @@ gulp.task('js',function(){
     .pipe(browserSync.reload({stream:true, once: true}));
 });
 
+//Optimize images
+gulp.task('img', function () {
+    return gulp.src('src/images/*')
+        .pipe(imagemin({
+            progressive: true,
+            svgoPlugins: [{removeViewBox: false}],
+            use: [pngcrush()]
+        }))
+        .pipe(gulp.dest('dist'));
+});
+
+
+//Watch for changes and reload the browser
 gulp.task('browser-sync', function() {
     browserSync.init(null, {
         server: {
@@ -57,6 +74,17 @@ gulp.task('browser-sync', function() {
 gulp.task('bs-reload', function () {
     browserSync.reload();
 });
+
+// Run PageSpeed Insights
+// Update `url` below to the public URL for your site
+gulp.task('pagespeed', pagespeed.bind(null, {
+  // By default, we use the PageSpeed Insights
+  // free (no API key) tier. You can use a Google
+  // Developer API key if you have one. See
+  // http://goo.gl/RkN0vE for info key: 'YOUR_API_KEY'
+  url: 'https://example.com',
+  strategy: 'mobile'
+}));
 
 gulp.task('default', ['css', 'js', 'browser-sync'], function () {
     gulp.watch("src/scss/*/*.scss", ['css']);
